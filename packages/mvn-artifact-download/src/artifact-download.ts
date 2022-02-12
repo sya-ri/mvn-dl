@@ -1,9 +1,8 @@
 import fs from 'fs';
-import { Agent } from 'http';
 import getFilename from 'mvn-artifact-filename';
 import parseName from 'mvn-artifact-name-parser';
 import artifactUrl from 'mvn-artifact-url';
-import fetch from 'node-fetch';
+import fetch, { RequestInit } from 'node-fetch';
 import path from 'path';
 
 export interface Artifact {
@@ -14,18 +13,6 @@ export interface Artifact {
   classifier?: string;
   isSnapShot?: boolean;
   snapShotVersion?: string;
-}
-export interface FetchOptions {
-  /**
-   * http.Agent instance, allows custom proxy, certificate etc.
-   * @default null
-   */
-  agent?: Agent | ((parsedUrl: URL) => Agent);
-  /**
-   * req/res timeout in ms, it resets on redirect. 0 to disable (OS limit applies)
-   * @default 0
-   */
-  timeout?: number;
 }
 
 function pipeToFile(body: NodeJS.ReadableStream, destFile: string) {
@@ -48,7 +35,7 @@ export default (async function download(
   destination?: string,
   repository?: string,
   filename?: string,
-  fetchOptions: FetchOptions = {}
+  fetchOptions: RequestInit = {}
 ) {
   destination = destination || process.cwd();
   const artifactShape =

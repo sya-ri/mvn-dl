@@ -1,6 +1,5 @@
-import { Agent } from 'http';
 import filename from 'mvn-artifact-filename';
-import fetch from 'node-fetch';
+import fetch, { RequestInit } from 'node-fetch';
 import parseXmlString from './parseXmlString';
 
 export interface Artifact {
@@ -11,19 +10,6 @@ export interface Artifact {
   classifier?: string;
   isSnapShot?: boolean;
   snapShotVersion?: string;
-}
-
-export interface FetchOptions {
-  /**
-   * http.Agent instance, allows custom proxy, certificate etc.
-   * @default null
-   */
-  agent?: Agent | ((parsedUrl: URL) => Agent);
-  /**
-   * req/res timeout in ms, it resets on redirect. 0 to disable (OS limit applies)
-   * @default 0
-   */
-  timeout?: number;
 }
 
 function groupPath(artifact: Artifact): string {
@@ -41,13 +27,10 @@ function artifactPath(artifact: Artifact): string {
 async function latestSnapShotVersion(
   artifact: Artifact,
   basepath: string,
-  fetchOptions: FetchOptions = {}
+  fetchOptions: RequestInit = {}
 ) {
   const metadataUrl = basepath + groupPath(artifact) + '/maven-metadata.xml';
-  const response = await fetch(metadataUrl, {
-    agent: fetchOptions.agent,
-    timeout: fetchOptions.timeout,
-  });
+  const response = await fetch(metadataUrl, fetchOptions);
   if (response.status !== 200) {
     throw new Error(
       `Unable to fetch ${metadataUrl}. Status ${response.status}`
@@ -63,7 +46,7 @@ async function latestSnapShotVersion(
 export default (async function artifactUrl(
   artifact: Artifact,
   basePath?: string,
-  fetchOptions: FetchOptions = {}
+  fetchOptions: RequestInit = {}
 ) {
   const prefix = basePath || 'https://repo1.maven.org/maven2/';
   if (artifact.isSnapShot) {
